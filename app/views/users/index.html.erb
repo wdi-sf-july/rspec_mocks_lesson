@@ -1,0 +1,7 @@
+<div class="row">
+  <div class="col-sm-offset-4 col-sm-4">
+    <% @users.each do |user| %>
+      <%= render partial: "user", locals: {user: user} %>
+    <% end %>
+  </div>
+</div>

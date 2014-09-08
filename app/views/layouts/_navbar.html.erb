@@ -1,0 +1,11 @@
+<div class="navbar navbar-default">
+  <div class="navbar-brand">
+    Blah
+  </div>
+</div>
+
+<% flash.each do |name, msg| %>
+  <div class="container">
+    <%= name %>: <%= msg %>
+  </div>
+<% end %>

@@ -1,0 +1,7 @@
+<div class="jumbotron">
+  <h1>Welcome
+    <% if current_user %>
+        <%= link_to current_user.email, user_path(current_user) %>
+    <% end %>
+  </h2>
+</div>

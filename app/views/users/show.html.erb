@@ -1,0 +1,7 @@
+<%= render partial: "user", locals: { user: @user } %>
+<% if @last_post %>
+  <%= render partial: "posts/post", locals: { user: @user, post: @last_post } %>
+<% end %>
+<div>
+  <%= link_to "All Posts", posts_path %>
+</div>

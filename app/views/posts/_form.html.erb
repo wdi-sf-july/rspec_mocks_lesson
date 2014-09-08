@@ -1,0 +1,11 @@
+<%= form_for post do |f| %>
+  <div class="form-group">
+    <%= f.text_field :title, placeholder: "Title", class: "form-control" %>
+  </div>
+  <div class="form-group">
+    <%= f.text_area :body, placeholder: "What's up?", class: "form-control" %>
+  </div>
+  <div>
+    <%= f.submit class: "btn btn-primary" %>
+  </div>
+<% end %>
