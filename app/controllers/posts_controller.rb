@@ -5,7 +5,7 @@ class PostsController < ApplicationController
   def index
     begin
       if params[:user_id]
-        @user = User.find_by_id(params[:user_id])
+        @user = User.foo(params[:user_id])
         @posts = @user.posts
       else
         @user = current_user
