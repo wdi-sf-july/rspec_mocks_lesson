@@ -152,6 +152,231 @@ end
 
 In a controller we might have not yet implemented the model details we would expect to be testing our application, but we still need to write valid tests that describe the behavior of our controller. The helps others focus on reading our specs to work toward implementing the controller.
 
+
+### Stub
+
+A stub is a method in on an object that we wish to have some control over for testing purposes and whose true functionality is of little value to the test be written.
+
+`examples/stub_spec.rb`
+
+```ruby
+
+class Person
+  attr_reader :messages
+  def initialize
+    @messages = []
+  end
+  
+  def send_message(msg)
+    if @messages.length < 4
+      @message.push(msg)
+      true
+    else
+      false
+    end
+  end
+
+end
+
+class Greeter
+  def say_hello(person)
+    # Here  the person object
+    #   is not directly under test
+    if person.send_message("Hello There!")
+      "Sent!"
+    else
+      "Failed!"
+    end
+  end
+end
+
+# Testing
+describe Greeter do
+  subject { Greeter.new }
+
+  describe "#say_hello" do
+    before (:each) do
+      @person = Person.new
+    end
+
+    it "should return 'Sent' on success" do
+      allow(@person).to receive(:send_message).and_return(true)
+      expect(subject.say_hello(@person)).to eq("Sent!")
+    end 
+
+    it "should return 'Failed' on success" do
+      allow(@person).to receive(:send_message).and_return(false)
+      expect(subject.say_hello(@person)).to eq("Failed!")
+    end   
+  end
+end
+```
+
+
+### Double
+
+A test **double** is not unlike a stunt double. It comes into play when we are testing a component of an application that requires interaction with another component **not directly under test**. This avoids problems with the implementation or existence of one component overly effecting the tests of another.
+
+A Quick Example:
+
+`examples/greeter_spec.rb`
+
+```ruby
+  
+  class Greeter
+    def say_hello(person)
+      # Here  the person object
+      #   is not directly under test
+      if person.send_message("Hello There!")
+        "Sent!"
+      else
+        "Failed!"
+      end
+    end
+  end
+
+# Now we can test Greeter
+
+describe Greeter do
+  subject { Greeter.new }
+
+  describe "#say_hello" do
+
+    it "should return 'Sent' on success" do
+      person = double("some person")
+      allow(person).to receive(:send_message).and_return(true)
+      expect(subject.say_hello(person)).to eq("Sent!")
+    end 
+
+    it "should return 'Failed' on success" do
+      person = double("some person")
+      allow(person).to receive(:send_message).and_return(false)
+      expect(subject.say_hello(person)).to eq("Failed!")
+    end   
+  end
+end
+
+```
+
+### Mocking 
+
+A mock is generally something that is more of a **pattern**. Unlike a `stub` where you simply substituted a method of your own creation and cared very little for how many times it was actually called or used, a mock pattern creates a **double** and sets up particular **expectations** on what the method **should be receiving in the future**, how many **times it is called**, and what it **should return**.
+
+
+
+`examples/mocking_spec.rb`
+
+```ruby
+  
+  class Greeter
+    def say_hello(person)
+      # Here  the person object
+      #   is not directly under test
+      if person.send_message("Hello There!")
+        "Sent!"
+      else
+        "Failed!"
+      end
+    end
+  end
+
+# Now we can test Greeter
+
+describe Greeter do
+  subject { Greeter.new }
+
+  describe "#say_hello" do
+
+    it "should return 'Sent' on success" do
+      person = double("some person")
+      expect(person).to receive(:send_message).with("Hello There!").and_return(true)
+      expect(subject.say_hello(person)).to eq("Sent!")
+    end 
+
+    it "should return 'Failed' on success" do
+      person = double("some person")
+      expect(person).to receive(:send_message).with("Hello There!").and_return(false)
+      expect(subject.say_hello(person)).to eq("Failed!")
+    end   
+  end
+end
+
+```
+
+### Stubbing In Our Rails Application 
+
+The most common thing to go stubbing is the `current_user`, which is something we will not care to test directly. Nevertheless you will still test the `current_user` method in a helper test for example.
+require 'rails_helper'
+
+
+```ruby
+RSpec.describe UsersController, :type => :controller do
+
+  before :each do
+    @user = FactoryGirl.create(:user)
+    allow_any_instance_of(ApplicationController).to receive(:current_user).and_return(@user)
+  end
+
+  describe "Get #index" do
+    it "should assign @users" do
+     get :index
+     expect(assigns(:users)).to eq([@user])
+    end
+  end
+end
+```
+
+### Mocking in our Rails Application
+
+Doubling an entire `ActiveRecord` object is no easy task, and so we can utilize `rspec-activemodel-mocks` to stand in during testing.
+
+`Gemfile`
+
+```ruby
+group :development, :test do
+  gem 'rspec-rails'
+  ### Add the following
+  gem 'rspec-activemodel-mocks'
+  gem 'factory_girl_rails'
+  gem 'ffaker'
+end
+```
+
+The best place to mock out a model would be in a controller spec where taking time to interact with a database is often both costly and unwanted. We want fast tests. We aren't trying to test the true behavior of the model as much as we want to express controller behaviors and attributes.
+
+`spec/controllers/post_controller_spec.rb`
+
+```ruby
+RSpec.describe PostsController, :type => :controller do
+  describe "Get index" do
+    before (:each) do
+      @user = mock_model("User")
+      @post = mock_model("Post")
+    end
+
+    describe "for a particular user" do
+      it "should assign @user and @posts" do   
+        expect(@user).to receive(:posts).and_return([@post])
+        expect(User).to receive(:find_by_id).and_return(@user).with(1).twice()
+
+        # This is an alternative to stubbing
+        #   the current_user
+        session["user_id"] = 1
+        get :index, { user_id: 1}
+        expect(assigns(:user)).to be(@user)
+        expect(assigns(:posts)).to eq([@post])
+      end
+    end
+
+  end
+
+end
+```
+
+
+
+
+
 ### Resources
 
 - **Rspec Stubs:** https://www.relishapp.com/rspec/rspec-mocks/v/2-3/docs/method-stubs  

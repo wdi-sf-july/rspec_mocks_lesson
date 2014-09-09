@@ -3,30 +3,22 @@ class PostsController < ApplicationController
   before_action :signed_in?
 
   def index
-    begin
-      if params[:user_id]
-        @user = User.foo(params[:user_id])
-        @posts = @user.posts
-      else
-        @user = current_user
-        @posts = @user.posts
-      end
-    rescue
-      redirect_to current_user
+    if params[:user_id]
+      @user = User.find_by_id(params[:user_id])
+      @posts = @user.posts
+    else
+      @user = current_user
+      @posts = @user.posts
     end
   end
 
   def show
-    begin
-      if params[:user_id]
-        @user = User.find_by_id(params[:user_id])
-        @post = @user.posts.find_by_id(params[:id])
-      else
-        @user = current_user
-        @post = @user.posts.find_by_id(params[:id])
-      end
-    rescue
-      redirect_to current_user
+    if params[:user_id]
+      @user = User.find_by_id(params[:user_id])
+      @post = @user.posts.find_by_id(params[:id])
+    else
+      @user = current_user
+      @post = @user.posts.find_by_id(params[:id])
     end
   end
 
